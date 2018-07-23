@@ -2,6 +2,7 @@
 #include <fstream>
 #include <sstream>
 #include <string>
+#include <list>
 #include <vector>
 #include <map>
 #include <set>
@@ -29,6 +30,8 @@ set<string> terminals;
 
 map<string, bool> SymbolDerivesEmpty;
 map<Rule, bool, Rule::compare> RuleDerivesEmpty;
+map<Rule, int, Rule::compare> count;
+list<string> worklist;
 
 	CFG(char* file){
 		char body[256];
@@ -80,20 +83,54 @@ map<Rule, bool, Rule::compare> RuleDerivesEmpty;
 	// TAIL(y);
 	
 	void DERIVESEMPTYSTRING(){
+		// cout << "DERIVESEMPTYSTRING : " << endl;
 		for(set<string>::iterator symbol=non_terminals.begin(); symbol!=non_terminals.end(); symbol++){
-			SymbolDerivesEmpty[*symbol] = false;
+			// SymbolDerivesEmpty[*symbol] = false;
+			SymbolDerivesEmpty.insert(std::pair<string,bool>(*symbol, false));
+			// cout << SymbolDerivesEmpty[*symbol] << endl;
 		}
-		map<Rule, int, Rule::compare> count;
 		for(vector<struct Rule>::iterator rule=rules.begin(); rule!=rules.end(); rule++){
 			RuleDerivesEmpty[*rule] = false;
+			// cout << "false : " << rule->number << endl;
 			count[*rule] = 0;
 			for(vector<string>::iterator token = rule->rhs.begin(); token!=rule->rhs.end(); token++){
 				count[*rule]++;
-				cout << count[*rule] << endl;
+			}
+			CHECKFOREMPTY(*rule);
+		}
+		while(!worklist.empty()){
+			string X = worklist.front();
+			// cout << "X : " << X << endl;
+			worklist.pop_front();
+			for(vector<struct Rule>::iterator rule=rules.begin(); rule!=rules.end(); rule++){
+				for(vector<string>::iterator token = rule->rhs.begin(); token!=rule->rhs.end(); token++){
+					if(!X.compare(*token)){
+						count[*rule]--;
+						CHECKFOREMPTY(*rule);
+					}
+				}
+			}
+		}
+		// for(map<string, bool>::iterator it = SymbolDerivesEmpty.begin(); it!= SymbolDerivesEmpty.begin(); it++){
+			// cout << it->first << " / " << it->second << endl;
+		// }
+		for(set<string>::iterator symbol=non_terminals.begin(); symbol!=non_terminals.end(); symbol++){
+			cout << *symbol << " " << SymbolDerivesEmpty[*symbol] << endl;
+		}
+	}
+	
+	void CHECKFOREMPTY(Rule rule){
+		if(count[rule] == 0){
+			RuleDerivesEmpty[rule] = true;
+			string symbol = rule.lhs;
+			// cout << "BOOL : " << SymbolDerivesEmpty[symbol] << endl;
+			if(!SymbolDerivesEmpty[symbol]){
+				SymbolDerivesEmpty[symbol] = true;
+				worklist.push_back(symbol);
 			}
 		}
 	}
-	// CHECKFOREMPTY(p);
+	
 };
 
 int main(int argc, char *argv[]){
