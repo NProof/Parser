@@ -1,8 +1,10 @@
 #include <iostream>
+#include <iomanip>
 #include <fstream>
 #include <sstream>
 #include <string>
 #include <list>
+#include <stack>
 #include <vector>
 #include <map>
 #include <set>
@@ -221,19 +223,34 @@ list<string> worklist;
 };
 
 int main(int argc, char *argv[]){
-	for(int index = 1; index < argc; index++){
+	for(int index = 1; index < argc; index += 2){
+		// cout << index << endl;
 		CFG cfg = CFG(argv[index]);
+		map<string, map<string, Rule> > table;
 		for(vector<struct Rule>::iterator iRule=cfg.rules.begin(); iRule!=cfg.rules.end(); iRule++){
-			cout << iRule->number << endl;
-			cout << iRule->rhs.size() << endl;
-			for(vector<string>::iterator ri = iRule->rhs.begin(); ri!=iRule->rhs.end(); ri++){
-				cout << " " << *ri ;
-			}
-			cout << endl;
 			set<string> ans = cfg.predict(*iRule);
-			cout << "size : " << ans.size() << endl ;
+			for(set<string>::iterator it=ans.begin(); it!=ans.end(); it++){
+				table[iRule->lhs][*it] = *iRule;
+			}
 		}
-		cout << "END \n" << endl;
+		std::ifstream inputStringFile(argv[index+1]);
+		char buffer[256];
+		while(inputStringFile.getline(buffer, 256)){
+			std::istringstream iss (buffer);
+			vector<string> inputToken;
+			string token;
+			while(iss >> token){
+				inputToken.push_back(token);
+			}
+			cout << inputToken.size() << endl;
+			stack<string> a;
+			while(!inputToken.empty()){
+				string last = *inputToken.rbegin();
+				a.push(last);
+				inputToken.pop_back();
+			}
+		}
+		cout << " = = = = =" << endl;
 	}
 	return 0;
 }
