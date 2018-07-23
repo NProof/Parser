@@ -49,6 +49,9 @@ list<string> worklist;
 					}
 					break;
 				}
+				else if(!currentToken.compare("")){
+					continue;
+				}
 				else{
 					rules.rbegin()->lhs = currentToken;
 					non_terminals.insert(currentToken);
@@ -61,12 +64,17 @@ list<string> worklist;
 					rules.rbegin()->rhs.push_back(currentToken);
 					terminals.insert(currentToken);
 				}
+				else if(!currentToken.compare("")){
+					continue;
+				}
 			}
 		}
 		start = rules.begin()->lhs;
 		set<string> temp;
 		std::set_difference (terminals.begin(), terminals.end(), non_terminals.begin(), non_terminals.end(), std::inserter(temp, temp.begin()));
 		terminals = temp;
+		
+		DERIVESEMPTYSTRING();
 	}
 	
 	set<Rule, Rule::compare> produtionsfor(string A){
@@ -200,38 +208,32 @@ list<string> worklist;
 		}
 		return true;
 	}
+	
+	set<string> predict(Rule rule){
+		set<string> ans = first(rule.rhs);
+		if(RuleDerivesEmpty[rule]){
+			set<string> temp = follow(rule.lhs);
+			std::set_union (ans.begin(), ans.end(), temp.begin(), temp.end(), std::inserter(ans, ans.begin()));
+		}
+		return ans;
+	}
+	
 };
 
 int main(int argc, char *argv[]){
 	for(int index = 1; index < argc; index++){
 		CFG cfg = CFG(argv[index]);
-		cfg.DERIVESEMPTYSTRING();
-		
-		/* cout << "FIRST " << endl;
-		for(set<string>::iterator t=cfg.non_terminals.begin(); t!=cfg.non_terminals.end(); t++){
-			cout << *t ;
-			vector<string> vt;
-			vt.push_back(*t);
-			set<string> firstSet = cfg.first(vt);
-			cout << " " << firstSet.size() << " >>" ;
-			for(set<string>::iterator itt=firstSet.begin(); itt!=firstSet.end(); itt++){
-				cout << " " << *itt ;
+		for(vector<struct Rule>::iterator iRule=cfg.rules.begin(); iRule!=cfg.rules.end(); iRule++){
+			cout << iRule->number << endl;
+			cout << iRule->rhs.size() << endl;
+			for(vector<string>::iterator ri = iRule->rhs.begin(); ri!=iRule->rhs.end(); ri++){
+				cout << " " << *ri ;
 			}
 			cout << endl;
+			set<string> ans = cfg.predict(*iRule);
+			cout << "size : " << ans.size() << endl ;
 		}
-		cout << "END " << endl; */
-		
-		cout << "FOLLOWS " << endl;
-		for(set<string>::iterator nt=cfg.non_terminals.begin(); nt!=cfg.non_terminals.end(); nt++){
-			cout << *nt ;
-			set<string> followSet = cfg.follow(*nt);
-			cout << " " << followSet.size() << " >>" ;
-			for(set<string>::iterator itt=followSet.begin(); itt!=followSet.end(); itt++){
-				cout << " " << *itt ;
-			}
-			cout << endl;
-		}
-		cout << "END " << endl;
+		cout << "END \n" << endl;
 	}
 	return 0;
 }
