@@ -3,6 +3,8 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <set>
+#include <algorithm>
 
 using namespace std;
 
@@ -12,12 +14,16 @@ struct rule{
 	vector<string> rhs;
 };
 
-int main(int argc, char *argv[]){
-	for(int index = 1; index < argc; index++){
-		// cout << " [ " << index << " ] : " << argv[index] << endl;
+class CFG{
+string start;
+vector<struct rule> rules;
+set<string> non_terminals;
+set<string> terminals;
+
+	public:
+	CFG(char* file){
 		char body[256];
-		std::ifstream ifs(argv[index]);
-		vector<struct rule> rules;
+		std::ifstream ifs(file);
 		while(ifs.getline (body,256)){
 			rules.push_back(rule());
 			string stringvalues(body);
@@ -33,6 +39,7 @@ int main(int argc, char *argv[]){
 				}
 				else{
 					rules.rbegin()->lhs = currentToken;
+					non_terminals.insert(currentToken);
 				}
 			}
 			while(iss >> currentToken){
@@ -40,21 +47,27 @@ int main(int argc, char *argv[]){
 					throw 1;
 				else{
 					rules.rbegin()->rhs.push_back(currentToken);
+					terminals.insert(currentToken);
 				}
 			}
 		}
+		start = rules.begin()->lhs;
 		
-		cout << "rules.size() = " << rules.size() << endl;
+		// set<string> temp(terminals);
+		// terminals.erase(terminals.begin(), terminals.end());
+		// std::set_difference (temp.begin(), temp.end(), non_terminals.begin(), non_terminals.end(), std::inserter(terminals, terminals.begin()));
 		
-		for(vector<struct rule>::iterator it=rules.begin(); it!=rules.end(); it++){
-			cout << "number : " << it->number << endl;
-			cout << "lhs : " << it->lhs << endl;
-			cout << "rhs : " ;
-			for(vector<string>::iterator it2= it->rhs.begin(); it2!= it->rhs.end(); it2++){
-				cout << *it2 << " ";
-			}
-			cout << endl;
-		}
+		set<string> temp;
+		std::set_difference (terminals.begin(), terminals.end(), non_terminals.begin(), non_terminals.end(), std::inserter(temp, temp.begin()));
+		terminals = temp;
+	}
+	
+};
+
+int main(int argc, char *argv[]){
+	for(int index = 1; index < argc; index++){
+		CFG cfg = CFG(argv[index]);
+		cout << "terminals.size() : " << cfg.terminals.size() << endl;
 	}
 	return 0;
 }
