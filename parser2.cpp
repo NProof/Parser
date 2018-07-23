@@ -69,29 +69,21 @@ list<string> worklist;
 		terminals = temp;
 	}
 	
-	set<int> produtionsfor(string A){
-		set<int> produtionforSet;
-		for(vector<struct Rule>::iterator it=rules.begin(); it!=rules.end(); it++){
-			if(!it->lhs.compare(A))
-				produtionforSet.insert(it->number);
+	set<Rule, Rule::compare> produtionsfor(string A){
+		set<Rule, Rule::compare> produtionforSet;
+		for(vector<struct Rule>::iterator rule=rules.begin(); rule!=rules.end(); rule++){
+			if(!rule->lhs.compare(A))
+				produtionforSet.insert(*rule);
 		}
 		return produtionforSet;
 	}
 	
-	// OCCURRENCES(X);
-	// PRODUCTION(y);
-	// TAIL(y);
-	
 	void DERIVESEMPTYSTRING(){
-		// cout << "DERIVESEMPTYSTRING : " << endl;
 		for(set<string>::iterator symbol=non_terminals.begin(); symbol!=non_terminals.end(); symbol++){
-			// SymbolDerivesEmpty[*symbol] = false;
 			SymbolDerivesEmpty.insert(std::pair<string,bool>(*symbol, false));
-			// cout << SymbolDerivesEmpty[*symbol] << endl;
 		}
 		for(vector<struct Rule>::iterator rule=rules.begin(); rule!=rules.end(); rule++){
 			RuleDerivesEmpty[*rule] = false;
-			// cout << "false : " << rule->number << endl;
 			count[*rule] = 0;
 			for(vector<string>::iterator token = rule->rhs.begin(); token!=rule->rhs.end(); token++){
 				count[*rule]++;
@@ -100,7 +92,6 @@ list<string> worklist;
 		}
 		while(!worklist.empty()){
 			string X = worklist.front();
-			// cout << "X : " << X << endl;
 			worklist.pop_front();
 			for(vector<struct Rule>::iterator rule=rules.begin(); rule!=rules.end(); rule++){
 				for(vector<string>::iterator token = rule->rhs.begin(); token!=rule->rhs.end(); token++){
@@ -111,23 +102,51 @@ list<string> worklist;
 				}
 			}
 		}
-		// for(map<string, bool>::iterator it = SymbolDerivesEmpty.begin(); it!= SymbolDerivesEmpty.begin(); it++){
-			// cout << it->first << " / " << it->second << endl;
-		// }
-		for(set<string>::iterator symbol=non_terminals.begin(); symbol!=non_terminals.end(); symbol++){
-			cout << *symbol << " " << SymbolDerivesEmpty[*symbol] << endl;
-		}
 	}
 	
 	void CHECKFOREMPTY(Rule rule){
 		if(count[rule] == 0){
 			RuleDerivesEmpty[rule] = true;
 			string symbol = rule.lhs;
-			// cout << "BOOL : " << SymbolDerivesEmpty[symbol] << endl;
 			if(!SymbolDerivesEmpty[symbol]){
 				SymbolDerivesEmpty[symbol] = true;
 				worklist.push_back(symbol);
 			}
+		}
+	}
+	map<string, bool> visitedFirst;
+	set<string> first(vector<string> vectorStr){
+		for(set<string>::iterator symbol=non_terminals.begin(); symbol!=non_terminals.end(); symbol++){
+			visitedFirst[*symbol] = false;
+		}
+		// for(map<string, bool>::iterator it = visitedFirst.begin(); it!= visitedFirst.end(); it++){
+			// cout << it->first << " / " << it->second << endl;
+		// }
+		return internalFirst(vectorStr);
+	}
+	
+	set<string> internalFirst(vector<string> vectorStr){
+		if(vectorStr.empty()){
+			return set<string>();
+		}
+		else{
+			set<string> returnSet;
+			string head = *vectorStr.begin();
+			if(terminals.count(head)){
+				returnSet.insert(head);
+				return returnSet;
+			}
+			if(!visitedFirst[head]){
+				visitedFirst[head] = true;
+				set<Rule, Rule::compare> produtionsforSet = produtionsfor(head);
+				for(set<Rule, Rule::compare>::iterator rule=produtionsforSet.begin(); rule!= produtionsforSet.end(); rule++){
+					set<string> unset = internalFirst(rule->rhs);
+					set<string> temp;
+					std::set_union (returnSet.begin(), returnSet.end(), unset.begin(), unset.end(), std::inserter(temp, temp.begin()));
+					returnSet = temp;
+				}
+			}
+			return returnSet;
 		}
 	}
 	
@@ -137,6 +156,19 @@ int main(int argc, char *argv[]){
 	for(int index = 1; index < argc; index++){
 		CFG cfg = CFG(argv[index]);
 		cfg.DERIVESEMPTYSTRING();
+		for(vector<struct Rule>::iterator v=cfg.rules.begin(); v!=cfg.rules.end(); v++){
+			cout << "rule number : " << v->number << " ; lhs is";
+			set<string> firstSet = cfg.first(v->rhs);
+			for(vector<string>::iterator it=v->rhs.begin(); it!=v->rhs.end(); it++){
+				cout << " " << *it;
+			}
+			cout << "\nthe first Set " << firstSet.size() << "\n :";
+			for(set<string>::iterator itt=firstSet.begin(); itt!=firstSet.end(); itt++){
+				cout << " " << *itt ;
+			}
+			cout << endl;
+		}
+		cout << "END " << endl;
 	}
 	return 0;
 }
