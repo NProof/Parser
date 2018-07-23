@@ -159,7 +159,7 @@ list<string> worklist;
 		}
 	}
 	
-	/* map<string, bool> visitedFollow;
+	map<string, bool> visitedFollow;
 	set<string> follow(string A){
 		for(set<string>::iterator symbol=non_terminals.begin(); symbol!=non_terminals.end(); symbol++){
 			visitedFollow[*symbol] = false;
@@ -175,7 +175,7 @@ list<string> worklist;
 				for(vector<string>::iterator token = rule->rhs.begin(); token!=rule->rhs.end(); token++){
 					if(!A.compare(*token)){
 						// cout << "\n" << rule->number << *token << endl;
-						vector<string> tail(token, rule->rhs.end());
+						vector<string> tail(token+1, rule->rhs.end());
 						set<string> temp = first(tail);
 						set<string> temp2;
 						std::set_union (ans.begin(), ans.end(), temp.begin(), temp.end(), std::inserter(temp2, temp2.begin()));
@@ -199,7 +199,7 @@ list<string> worklist;
 				return false;
 		}
 		return true;
-	} */
+	}
 };
 
 int main(int argc, char *argv[]){
@@ -207,7 +207,7 @@ int main(int argc, char *argv[]){
 		CFG cfg = CFG(argv[index]);
 		cfg.DERIVESEMPTYSTRING();
 		
-		cout << "FIRST " << endl;
+		/* cout << "FIRST " << endl;
 		for(set<string>::iterator t=cfg.non_terminals.begin(); t!=cfg.non_terminals.end(); t++){
 			cout << *t ;
 			vector<string> vt;
@@ -219,9 +219,9 @@ int main(int argc, char *argv[]){
 			}
 			cout << endl;
 		}
-		cout << "END " << endl;
+		cout << "END " << endl; */
 		
-		/* cout << "FOLLOWS " << endl;
+		cout << "FOLLOWS " << endl;
 		for(set<string>::iterator nt=cfg.non_terminals.begin(); nt!=cfg.non_terminals.end(); nt++){
 			cout << *nt ;
 			set<string> followSet = cfg.follow(*nt);
@@ -231,7 +231,7 @@ int main(int argc, char *argv[]){
 			}
 			cout << endl;
 		}
-		cout << "END " << endl; */
+		cout << "END " << endl;
 	}
 	return 0;
 }
