@@ -15,12 +15,12 @@ struct rule{
 };
 
 class CFG{
+	public:
 string start;
 vector<struct rule> rules;
 set<string> non_terminals;
 set<string> terminals;
 
-	public:
 	CFG(char* file){
 		char body[256];
 		std::ifstream ifs(file);
@@ -52,22 +52,30 @@ set<string> terminals;
 			}
 		}
 		start = rules.begin()->lhs;
-		
-		// set<string> temp(terminals);
-		// terminals.erase(terminals.begin(), terminals.end());
-		// std::set_difference (temp.begin(), temp.end(), non_terminals.begin(), non_terminals.end(), std::inserter(terminals, terminals.begin()));
-		
 		set<string> temp;
 		std::set_difference (terminals.begin(), terminals.end(), non_terminals.begin(), non_terminals.end(), std::inserter(temp, temp.begin()));
 		terminals = temp;
 	}
 	
+	set<int> produtionsfor(string A){
+		set<int> produtionforSet;
+		for(vector<struct rule>::iterator it=rules.begin(); it!=rules.end(); it++){
+			if(!it->lhs.compare(A))
+				produtionforSet.insert(it->number);
+		}
+		return produtionforSet;
+	}
 };
 
 int main(int argc, char *argv[]){
 	for(int index = 1; index < argc; index++){
 		CFG cfg = CFG(argv[index]);
-		cout << "terminals.size() : " << cfg.terminals.size() << endl;
+		set<int> produtionforSet = cfg.produtionsfor("E");
+		cout << produtionforSet.size() << endl;
+		for(set<int>::iterator it=produtionforSet.begin(); it!=produtionforSet.end(); it++){
+			cout << " " << *it ;
+		}
+		cout << endl;
 	}
 	return 0;
 }
