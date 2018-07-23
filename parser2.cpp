@@ -222,35 +222,94 @@ list<string> worklist;
 	
 };
 
+int solve(stack<string> &start, map<string, map<string, Rule> > &table, stack<string> &target){
+	while(!(start.empty()||target.empty())){
+		string input = start.top(), output = target.top();
+		// cout << input << " , " << output << endl;
+		start.pop();
+		if(input.compare(output)){
+			if(table.count(input)&&table[input].count(output)){
+				cout << " " << table[input][output].number;
+				vector<string> derivations = table[input][output].rhs;
+				for(vector<string>::reverse_iterator rit=derivations.rbegin(); rit!=derivations.rend(); ++rit){
+					start.push(*rit);
+				}
+			}
+			else return 0;
+		}
+		else{
+			// cout << " (- " << output << ") " ;
+			target.pop();
+		}
+	}
+	return start.empty()&&target.empty();
+}
+
 int main(int argc, char *argv[]){
 	for(int index = 1; index < argc; index += 2){
 		// cout << index << endl;
 		CFG cfg = CFG(argv[index]);
 		map<string, map<string, Rule> > table;
+		vector<string> orderT, orderNT;
+		set<string> otherT = cfg.terminals, otherNT = cfg.non_terminals;
 		for(vector<struct Rule>::iterator iRule=cfg.rules.begin(); iRule!=cfg.rules.end(); iRule++){
+			if(otherNT.count(iRule->lhs)){
+				otherNT.erase(iRule->lhs);
+				orderNT.push_back(iRule->lhs);
+			}
+			for(vector<string>::iterator it=iRule->rhs.begin(); it!=iRule->rhs.end(); ++it){
+				if(otherT.count(*it)){
+					otherT.erase(*it);
+					orderT.push_back(*it);
+				}
+			}
 			set<string> ans = cfg.predict(*iRule);
 			for(set<string>::iterator it=ans.begin(); it!=ans.end(); it++){
 				table[iRule->lhs][*it] = *iRule;
 			}
 		}
+		cout << " N.T. \\  T.";
+		for(vector<string>::iterator it=orderT.begin(); it!=orderT.end(); ++it){
+			cout << setw(15) << *it ;
+		}
+		cout << endl;
+		for(vector<string>::iterator iNT=orderNT.begin(); iNT!=orderNT.end(); ++iNT){
+			cout << setw(9) << *iNT ;
+			for(vector<string>::iterator iT=orderT.begin(); iT!=orderT.end(); ++iT){
+				if(table[*iNT][*iT].number){
+					cout << setw(15) << table[*iNT][*iT].number ;
+				}
+				else
+					cout << setw(15) << "-" ;
+			}
+			cout << endl;
+		}
+		cout << endl;
+		cout << " The Outputs :" << endl;
 		std::ifstream inputStringFile(argv[index+1]);
 		char buffer[256];
 		while(inputStringFile.getline(buffer, 256)){
+			// cout << "qustion : \t" << buffer << endl;
 			std::istringstream iss (buffer);
 			vector<string> inputToken;
 			string token;
 			while(iss >> token){
 				inputToken.push_back(token);
 			}
-			cout << inputToken.size() << endl;
-			stack<string> a;
+			stack<string> target, start;
 			while(!inputToken.empty()){
 				string last = *inputToken.rbegin();
-				a.push(last);
+				target.push(last);
 				inputToken.pop_back();
 			}
+			start.push(cfg.start);
+			if(!solve(start, table, target)){
+				cout << " Error" << endl;
+			}
+			// else cout << " Accept" << endl;
+			else cout << endl;
 		}
-		cout << " = = = = =" << endl;
+		cout << endl;
 	}
 	return 0;
 }
