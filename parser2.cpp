@@ -3,12 +3,18 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <map>
 #include <set>
 #include <algorithm>
 
 using namespace std;
 
-struct rule{
+struct Rule{
+	struct compare{
+		public:
+		bool operator()(const Rule x,const Rule y) { return x.number<y.number; }
+	};
+	
 	int number;
 	string lhs;
 	vector<string> rhs;
@@ -17,15 +23,18 @@ struct rule{
 class CFG{
 	public:
 string start;
-vector<struct rule> rules;
+vector<struct Rule> rules;
 set<string> non_terminals;
 set<string> terminals;
+
+map<string, bool> SymbolDerivesEmpty;
+map<Rule, bool, Rule::compare> RuleDerivesEmpty;
 
 	CFG(char* file){
 		char body[256];
 		std::ifstream ifs(file);
 		while(ifs.getline (body,256)){
-			rules.push_back(rule());
+			rules.push_back(Rule());
 			string stringvalues(body);
 			std::istringstream iss (stringvalues);
 			iss >> rules.rbegin()->number;
@@ -45,7 +54,7 @@ set<string> terminals;
 			while(iss >> currentToken){
 				if(!currentToken.compare(">")||!currentToken.compare("|"))
 					throw 1;
-				else{
+				else if(currentToken.compare("lamda")){
 					rules.rbegin()->rhs.push_back(currentToken);
 					terminals.insert(currentToken);
 				}
@@ -59,23 +68,38 @@ set<string> terminals;
 	
 	set<int> produtionsfor(string A){
 		set<int> produtionforSet;
-		for(vector<struct rule>::iterator it=rules.begin(); it!=rules.end(); it++){
+		for(vector<struct Rule>::iterator it=rules.begin(); it!=rules.end(); it++){
 			if(!it->lhs.compare(A))
 				produtionforSet.insert(it->number);
 		}
 		return produtionforSet;
 	}
+	
+	// OCCURRENCES(X);
+	// PRODUCTION(y);
+	// TAIL(y);
+	
+	void DERIVESEMPTYSTRING(){
+		for(set<string>::iterator symbol=non_terminals.begin(); symbol!=non_terminals.end(); symbol++){
+			SymbolDerivesEmpty[*symbol] = false;
+		}
+		map<Rule, int, Rule::compare> count;
+		for(vector<struct Rule>::iterator rule=rules.begin(); rule!=rules.end(); rule++){
+			RuleDerivesEmpty[*rule] = false;
+			count[*rule] = 0;
+			for(vector<string>::iterator token = rule->rhs.begin(); token!=rule->rhs.end(); token++){
+				count[*rule]++;
+				cout << count[*rule] << endl;
+			}
+		}
+	}
+	// CHECKFOREMPTY(p);
 };
 
 int main(int argc, char *argv[]){
 	for(int index = 1; index < argc; index++){
 		CFG cfg = CFG(argv[index]);
-		set<int> produtionforSet = cfg.produtionsfor("E");
-		cout << produtionforSet.size() << endl;
-		for(set<int>::iterator it=produtionforSet.begin(); it!=produtionforSet.end(); it++){
-			cout << " " << *it ;
-		}
-		cout << endl;
+		cfg.DERIVESEMPTYSTRING();
 	}
 	return 0;
 }
